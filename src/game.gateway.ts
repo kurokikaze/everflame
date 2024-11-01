@@ -16,9 +16,10 @@ import { Server } from "socket.io";
 @WebSocketGateway({
     cors: true,
 })
+
 export class GameGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-        private readonly logger = new Logger(GameGateway.name);
+    private readonly logger = new Logger(GameGateway.name);
 
     @WebSocketServer() io: Server;
 
@@ -32,7 +33,7 @@ export class GameGateway
         this.logger.log(`Client id: ${client.id} connected`)
         this.logger.debug(`Number of connected clients: ${sockets.size}`)
     }
-    
+
     handleDisconnect(_client: any) {
         this.logger.debug('Disconnected')
     }
@@ -52,7 +53,7 @@ export class GameGateway
     ): WsResponse<unknown> {
         let authorized = true
         this.logger.debug(`Authorizing client ${client.id}`)
-        return { event: 'response', data: { authorized }}
+        return { event: 'response', data: { authorized } }
     }
 
     onEvent(@MessageBody() data: unknown) {
