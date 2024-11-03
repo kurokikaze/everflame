@@ -16,8 +16,6 @@ import { MailerModule } from './mailer/mailer.module';
 import { AuthModule } from './auth/auth.module';
 import { BlacklistedTokenEntity } from './auth/entity/blacklisted-token.entity';
 import { UserController } from './user/user.controller';
-// import { APP_GUARD } from '@nestjs/core';
-// import { AuthGuard } from './auth/guards/auth.guard';
 
 @Module({
   imports: [
@@ -40,10 +38,6 @@ import { UserController } from './user/user.controller';
   ],
   controllers: [AppController, ChallengeController, UserController],
   providers: [
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard,
-    // },
     AppService,
     ChallengeService
   ],
