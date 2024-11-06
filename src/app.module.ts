@@ -16,6 +16,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { AuthModule } from './auth/auth.module';
 import { BlacklistedTokenEntity } from './auth/entity/blacklisted-token.entity';
 import { UserController } from './user/user.controller';
+import { GameService } from './game/gameService';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { UserController } from './user/user.controller';
   controllers: [AppController, ChallengeController, UserController],
   providers: [
     AppService,
-    ChallengeService
+    ChallengeService,
+    GameService,
   ],
 })
 

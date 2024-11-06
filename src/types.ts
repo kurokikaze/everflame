@@ -1,5 +1,5 @@
 export type Challenge = {
-    userId: number
+    userId: string
     comment: string
     dateCreated: Date
     deck: string[]

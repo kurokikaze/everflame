@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import {
+    ConnectedSocket,
     MessageBody,
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -13,6 +14,7 @@ import {
 import { Server } from "socket.io";
 import { ChallengeService } from "./challengeService";
 import { v4 } from "uuid";
+import { Challenge } from "./types";
 
 type ClientChallenge = {
     id: string
@@ -21,8 +23,17 @@ type ClientChallenge = {
     own: boolean
 }
 
+function mapChallengeToClient(challenge: Challenge, clientId: string): ClientChallenge {
+    return {
+        name: challenge.comment,
+        created: challenge.dateCreated,
+        id: challenge.id,
+        own: challenge.userId == clientId
+    }
+}
 @WebSocketGateway({
     cors: true,
+    namespace: 'challenge'
 })
 export class ChallengeGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -39,20 +50,37 @@ export class ChallengeGateway
     }
 
     handleConnection(client: any, ...args: any[]) {
-        const { sockets } = this.io.sockets;
+        // const { sockets } = this.io.sockets;
 
         this.logger.log(`Client id: ${client.id} connected`)
-        this.logger.debug(`Number of connected clients: ${sockets.size}`)
+        // this.logger.debug(`Number of connected clients: ${sockets.size}`)
         const challenges = this.challengeService.getChallenges()
-        const clientChallenges = challenges.map((challenge): ClientChallenge => {
-            return {
-                name: challenge.comment,
-                created: challenge.dateCreated,
-                id: challenge.id,
-                own: challenge.userId == client.id
+        const clientChallenges = challenges.map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id))
+        // subscribe the player here
+        const remover = this.challengeService.onChange((type, argument) => {
+            switch (type) {
+                case 'register': {
+                    client.send({ event: 'new_challenge', data: argument })
+                    break;
+                }
+                case 'unregister': {
+                    client.send({ event: 'remove_challenge', data: argument })
+                    break;
+                }
+                case 'accept': {
+                    if (client.id === argument.userId) {
+                        // If it was our challenge, we should receive the secret
+                        this.logger.debug(`Challenge secret (challenger) ${argument.secret}`)
+                        client.send({ event: 'challenge_accepted', data: argument.secret })
+                    } else {
+                        // Otherwise, just drop it from the list
+                        client.send({ event: 'remove_challenge', data: argument.challengeId })
+                    }
+                    break;
+                }
             }
         })
-        // subscribe the player here
+        client.on('disconnect', () => remover())
         client.send({ event: 'response', data: clientChallenges })
     }
 
@@ -62,37 +90,49 @@ export class ChallengeGateway
 
     @SubscribeMessage('create')
     handleCreate(
-        client: any, payload: any
+        @ConnectedSocket() client: any,
+        @MessageBody() payload: any,
+        // @MessageBody('deck') deck: string[],
+        // @MessageBody('comment') comment: string,
     ): WsResponse<unknown> {
         this.logger.debug(`Create challenge from ${client.id}`)
-        this.challengeService.register({
-            deck: payload.deck,
-            userId: client.id,
-            dateCreated: new Date(),
-            comment: payload.comment,
-            id: v4(),
-        })
-        this.logger.debug(`Data: ${payload}`)
-        return { event: 'response', data: this.challengeService.getChallenges() };
+        const {deck, comment} = JSON.parse(payload)
+        //const payloadData = JSON.parse(payload)
+        if (!this.challengeService.hasChallenge(client.id)) {
+            const challengeId = v4()
+            this.challengeService.register({
+                deck: deck,
+                userId: client.id,
+                dateCreated: new Date(),
+                comment: comment,
+                id: challengeId,
+            }, client)
+
+            client.on('disconnect', () => {
+                this.challengeService.unregister(client.id)
+            })
+        }
+        return { event: 'response', data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) };
     }
 
     @SubscribeMessage('delete')
     handleDelete(
-        client: any, payload: any
+        client: any
     ): WsResponse<unknown> {
-        this.logger.debug(`Create challenge from ${client.id}`)
-        this.logger.debug(`Data: ${payload}`)
+        this.logger.debug(`Delete challenge from ${client.id}`)
+        // this.logger.debug(`Data: ${payload}`)
         this.challengeService.unregister(client.id)
-        return { event: 'response', data: this.challengeService.getChallenges() };
+        return { event: 'response', data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) };
     }
 
     @SubscribeMessage('accept')
     handleAuth(
         client: any, payload: any
     ): WsResponse<unknown> {
-        let authorized = true
         this.logger.debug(`Accepting challenge by ${client.id}`)
-        return { event: 'response', data: { authorized } }
+        const secret = this.challengeService.accept(payload.challengeId, client.id, payload.deck)
+        this.logger.debug(`Challenge secret (host) ${secret}`)
+        return { event: 'challenge_accepted', data: secret }
     }
 
     onEvent(@MessageBody() data: unknown) {

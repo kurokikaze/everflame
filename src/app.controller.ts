@@ -39,21 +39,20 @@ export class AppController {
     return { success: true }
   }
 
-  @Post('register')
-  register(@Body('userId') userId: number, @Body('comment') comment: string, @Body('deck') deck: string[]): Challenge[] {
-    const challenge: Challenge = {
-      userId,
-      comment,
-      dateCreated: new Date(),
-      id: v4(),
-      deck,
-    }
-    this.challengeService.register(challenge)
-    return this.challengeService.getChallenges()
-  }
-
-  @Post('unregister')
-  unregister(@Body('userId') userId: number) {
-    this.challengeService.unregister(userId)
-  }
+  // @Post('register')
+  // register(@Body('userId') userId: number, @Body('comment') comment: string, @Body('deck') deck: string[]): Challenge[] {
+  //   const challenge: Challenge = {
+  //     userId,
+  //     comment,
+  //     dateCreated: new Date(),
+  //     id: v4(),
+  //     deck,
+  //   }
+  //   this.challengeService.register(challenge)
+  //   return this.challengeService.getChallenges()
+  // }
+  // @Post('unregister')
+  // unregister(@Body('userId') userId: number) {
+  //   this.challengeService.unregister(userId)
+  // }
 }

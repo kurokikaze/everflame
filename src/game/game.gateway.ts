@@ -11,14 +11,19 @@ import {
     WsResponse,
 } from "@nestjs/websockets";
 
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
+import { GameService } from "./gameService";
 
 @WebSocketGateway({
     cors: true,
+    namespace: /game\/[a-zA-Z0-9-]/g
 })
 
 export class GameGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+    constructor(
+        private gameService: GameService,
+    ) { }
     private readonly logger = new Logger(GameGateway.name);
 
     @WebSocketServer() io: Server;
@@ -27,11 +32,14 @@ export class GameGateway
         this.logger.debug(`Server initialized`)
     }
 
-    handleConnection(client: any, ...args: any[]) {
-        const { sockets } = this.io.sockets;
-
+    handleConnection(
+        @ConnectedSocket() client: Socket
+    ) {
         this.logger.log(`Client id: ${client.id} connected`)
-        this.logger.debug(`Number of connected clients: ${sockets.size}`)
+        this.logger.log(`Connection namespace: ${client.nsp.name}`)
+        const playerSecret = client.nsp.name.split('/')[2]
+        this.logger.log(`Player secret: ${playerSecret}`)
+        this.gameService.connectWithSecret(playerSecret, client)
     }
 
     handleDisconnect(_client: any) {

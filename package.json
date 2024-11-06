@@ -30,6 +30,7 @@
     "@nestjs/platform-socket.io": "^10.4.5",
     "@nestjs/platform-ws": "^10.4.5",
     "@nestjs/websockets": "^10.4.5",
+    "moonlands": "https://github.com/kurokikaze/moonlands/archive/refs/tags/v0.23.6.tar.gz",
     "@types/handlebars": "^4.1.0",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
