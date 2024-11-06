@@ -13,6 +13,10 @@ const testChallenge: Challenge = {
 
 type ChallengeCallback = (event: string, dto: any) => void
 
+export const CHALLENGE_EVENT_REGISTER = 'register'
+export const CHALLENGE_EVENT_UNREGISTER = 'unregister'
+export const CHALLENGE_EVENT_ACCEPT = 'accept'
+
 @Injectable()
 export class ChallengeService {
   constructor(
@@ -33,13 +37,13 @@ export class ChallengeService {
     this.challenges.push(challenge)
     this.challengeClients[challenge.id] = client
 
-    this.sendOut('register', challenge)
+    this.sendOut(CHALLENGE_EVENT_REGISTER, challenge)
     return this.challenges;
   }
 
   unregister(userId: string) {
     this.challenges = this.challenges.filter(({ userId: id }) => id !== userId)
-    this.sendOut('unregister', userId)
+    this.sendOut(CHALLENGE_EVENT_UNREGISTER, userId)
   }
 
   accept(challengeId: string, playerId: string, deck: string[]): string | null {    
@@ -56,7 +60,7 @@ export class ChallengeService {
       deck
     )
 
-    this.sendOut('accept', {
+    this.sendOut(CHALLENGE_EVENT_ACCEPT, {
       userId: challenge.userId,
       challengeId,
       secret: secretOne,

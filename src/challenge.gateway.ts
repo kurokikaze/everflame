@@ -12,7 +12,7 @@ import {
 } from "@nestjs/websockets";
 
 import { Server } from "socket.io";
-import { ChallengeService } from "./challengeService";
+import { CHALLENGE_EVENT_ACCEPT, CHALLENGE_EVENT_REGISTER, CHALLENGE_EVENT_UNREGISTER, ChallengeService } from "./challengeService";
 import { v4 } from "uuid";
 import { Challenge } from "./types";
 
@@ -31,6 +31,11 @@ function mapChallengeToClient(challenge: Challenge, clientId: string): ClientCha
         own: challenge.userId == clientId
     }
 }
+
+const CLIENT_CHALLENGE_EVENT_CREATE = 'new_challenge'
+const CLIENT_CHALLENGE_EVENT_DELETE = 'remove_challenge'
+const CLIENT_CHALLENGE_EVENT_ACCEPT = 'challenge_accepted'
+
 @WebSocketGateway({
     cors: true,
     namespace: 'challenge'
@@ -50,8 +55,6 @@ export class ChallengeGateway
     }
 
     handleConnection(client: any, ...args: any[]) {
-        // const { sockets } = this.io.sockets;
-
         this.logger.log(`Client id: ${client.id} connected`)
         // this.logger.debug(`Number of connected clients: ${sockets.size}`)
         const challenges = this.challengeService.getChallenges()
@@ -59,22 +62,22 @@ export class ChallengeGateway
         // subscribe the player here
         const remover = this.challengeService.onChange((type, argument) => {
             switch (type) {
-                case 'register': {
-                    client.send({ event: 'new_challenge', data: argument })
+                case CHALLENGE_EVENT_REGISTER: {
+                    client.send({ event: CLIENT_CHALLENGE_EVENT_CREATE, data: argument })
                     break;
                 }
-                case 'unregister': {
-                    client.send({ event: 'remove_challenge', data: argument })
+                case CHALLENGE_EVENT_UNREGISTER: {
+                    client.send({ event: CLIENT_CHALLENGE_EVENT_DELETE, data: argument })
                     break;
                 }
-                case 'accept': {
+                case CHALLENGE_EVENT_ACCEPT: {
                     if (client.id === argument.userId) {
                         // If it was our challenge, we should receive the secret
-                        this.logger.debug(`Challenge secret (challenger) ${argument.secret}`)
-                        client.send({ event: 'challenge_accepted', data: argument.secret })
+                        this.logger.debug(`Challenge secret (host) ${argument.secret}`)
+                        client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: argument.secret })
                     } else {
                         // Otherwise, just drop it from the list
-                        client.send({ event: 'remove_challenge', data: argument.challengeId })
+                        client.send({ event: CLIENT_CHALLENGE_EVENT_DELETE, data: argument.challengeId })
                     }
                     break;
                 }
@@ -131,7 +134,7 @@ export class ChallengeGateway
         const { challengeId, deck } = JSON.parse(payload)
         this.logger.debug(`Accepting challenge ${challengeId}`)
         const secret = this.challengeService.accept(challengeId, client.id, deck)
-        this.logger.debug(`Challenge secret (host) ${secret}`)
-        return { event: 'challenge_accepted', data: secret }
+        this.logger.debug(`Challenge secret (challenger) ${secret}`)
+        return { event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: secret }
     }
 }
