@@ -92,11 +92,9 @@ export class ChallengeGateway
     handleCreate(
         @ConnectedSocket() client: any,
         @MessageBody() payload: any,
-        // @MessageBody('deck') deck: string[],
-        // @MessageBody('comment') comment: string,
     ): WsResponse<unknown> {
         this.logger.debug(`Create challenge from ${client.id}`)
-        const {deck, comment} = JSON.parse(payload)
+        const { deck, comment } = JSON.parse(payload)
         //const payloadData = JSON.parse(payload)
         if (!this.challengeService.hasChallenge(client.id)) {
             const challengeId = v4()
@@ -126,17 +124,14 @@ export class ChallengeGateway
     }
 
     @SubscribeMessage('accept')
-    handleAuth(
-        client: any, payload: any
+    handleAccept(
+        @ConnectedSocket() client: any,
+        @MessageBody() payload: any
     ): WsResponse<unknown> {
-        this.logger.debug(`Accepting challenge by ${client.id}`)
-        const secret = this.challengeService.accept(payload.challengeId, client.id, payload.deck)
+        const { challengeId, deck } = JSON.parse(payload)
+        this.logger.debug(`Accepting challenge ${challengeId}`)
+        const secret = this.challengeService.accept(challengeId, client.id, deck)
         this.logger.debug(`Challenge secret (host) ${secret}`)
         return { event: 'challenge_accepted', data: secret }
-    }
-
-    onEvent(@MessageBody() data: unknown) {
-        this.logger.debug(`onEvent handler`)
-        this.io.send('game', { whoo: true })
     }
 }

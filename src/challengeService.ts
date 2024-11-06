@@ -6,7 +6,7 @@ import { GameService } from './game/gameService';
 const testChallenge: Challenge = {
   comment: 'Evu challenges you',
   dateCreated: new Date(),
-  deck: ['Eebit'],
+  deck: ['Evu', 'Evu', 'Evu', 'Balamant Pup'],
   userId: '12',
   id: v4()
 }
@@ -42,9 +42,11 @@ export class ChallengeService {
     this.sendOut('unregister', userId)
   }
 
-  accept(challengeId: string, playerId: string, deck: string[]): string | null {
-    if (!(challengeId in this.challenges)) return null
-    const challenge: Challenge = this.challenges[challengeId]
+  accept(challengeId: string, playerId: string, deck: string[]): string | null {    
+    const challenge: Challenge = this.challenges.find(({id}) => id === challengeId)
+    // Break on no challenge
+    if (!challenge) return null
+    // Cannot accept own challenge
     if (challenge.userId === playerId) return null
 
     const [secretOne, secretTwo] = this.gameService.create(

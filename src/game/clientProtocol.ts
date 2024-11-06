@@ -1,4 +1,4 @@
-import { ConvertedCard, HiddenConvertedCard } from "moonlands/src/classes/CardInGame"
+import { ConvertedCard, HiddenConvertedCard } from "moonlands/dist/cjs/classes/CardInGame"
 import {
   ACTION_ATTACK,
   ACTION_EFFECT,
@@ -54,10 +54,10 @@ import {
   TYPE_CREATURE,
   TYPE_RELIC,
   TYPE_SPELL,
-} from "moonlands/src/const"
-import { ZoneType, RestrictionObjectType, StaticAbilityType, TriggerEffectType } from "moonlands/src/types"
-import { ExpirationObjectType, RestrictionType } from "moonlands/src/types/common"
-import { AlternativeType } from "moonlands/src/types/prompt"
+} from "moonlands/dist/cjs/const"
+import { ZoneType, RestrictionObjectType, StaticAbilityType, TriggerEffectType } from "moonlands/dist/cjs/types"
+import { ExpirationObjectType, RestrictionType } from "moonlands/dist/cjs/types/common"
+import { AlternativeType } from "moonlands/dist/cjs/types/prompt"
 
 export type ConvertedCardMinimal = {
   id: string,

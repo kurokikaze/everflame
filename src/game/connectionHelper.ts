@@ -1,7 +1,6 @@
-import { State } from "moonlands/src/index";
+import { State } from "moonlands/dist/cjs/index";
 import { Socket } from "socket.io";
 import { convertServerCommand } from "./utils";
-import { EventEmitter } from "stream";
 
 export function connectionHelper(client: Socket, state: State, playerNumber: number) {
 

@@ -1,12 +1,12 @@
-import { State } from "moonlands/src/index";
+import { State } from "moonlands/dist/cjs/index";
 import convertClientCommands, { convertServerCommand } from "./utils";
-import { AnyEffectType } from "moonlands/src/types";
+import { AnyEffectType } from "moonlands/dist/cjs/types";
 import { ClientCommand } from "./clientProtocol";
 
 export default class ContainedEngine {
-    protected gameState: State;
-    private playerOneCallback: Function = () => {};
-    private playerTwoCallback: Function = () => {};
+    protected gameState: any;
+    private playerOneCallback: Function = () => { };
+    private playerTwoCallback: Function = () => { };
 
     constructor(
         deck1: string[],
@@ -19,31 +19,31 @@ export default class ContainedEngine {
         this.gameState.setup();
 
         const actionCallback = (action: AnyEffectType) => {
-              const commandPlayerOne = convertServerCommand(action, this.gameState, 1);
-      
-              if (commandPlayerOne) {
+            const commandPlayerOne = convertServerCommand(action, this.gameState, 1);
+
+            if (commandPlayerOne) {
                 try {
                     this.playerOneCallback(commandPlayerOne)
-                } catch(err) {
-                  console.error('Error converting the server command')
-                  console.dir(err)
-                  console.dir(commandPlayerOne)
-                }
-              }
-              const commandPlayerTwo = convertServerCommand(action, this.gameState, 2);
-      
-              if (commandPlayerTwo) {
-                try {
-                  this.playerTwoCallback(commandPlayerTwo)
                 } catch (err) {
-                  console.error('Error converting the server command')
-                  console.dir(err)
-                  console.dir(commandPlayerTwo)
+                    console.error('Error converting the server command')
+                    console.dir(err)
+                    console.dir(commandPlayerOne)
                 }
-              }
             }
-          
-            this.gameState.setOnAction(actionCallback);
+            const commandPlayerTwo = convertServerCommand(action, this.gameState, 2);
+
+            if (commandPlayerTwo) {
+                try {
+                    this.playerTwoCallback(commandPlayerTwo)
+                } catch (err) {
+                    console.error('Error converting the server command')
+                    console.dir(err)
+                    console.dir(commandPlayerTwo)
+                }
+            }
+        }
+
+        this.gameState.setOnAction(actionCallback);
     }
 
 
