@@ -32,6 +32,7 @@ function mapChallengeToClient(challenge: Challenge, clientId: string): ClientCha
     }
 }
 
+const CLIENT_CHALLENGE_EVENT_INITIAL = 'response'
 const CLIENT_CHALLENGE_EVENT_CREATE = 'new_challenge'
 const CLIENT_CHALLENGE_EVENT_DELETE = 'remove_challenge'
 const CLIENT_CHALLENGE_EVENT_ACCEPT = 'challenge_accepted'
@@ -63,7 +64,7 @@ export class ChallengeGateway
         const remover = this.challengeService.onChange((type, argument) => {
             switch (type) {
                 case CHALLENGE_EVENT_REGISTER: {
-                    client.send({ event: CLIENT_CHALLENGE_EVENT_CREATE, data: argument })
+                    client.send({ event: CLIENT_CHALLENGE_EVENT_CREATE, data: mapChallengeToClient(argument, client.id) })
                     break;
                 }
                 case CHALLENGE_EVENT_UNREGISTER: {
@@ -75,6 +76,8 @@ export class ChallengeGateway
                         // If it was our challenge, we should receive the secret
                         this.logger.debug(`Challenge secret (host) ${argument.secret}`)
                         client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: argument.secret })
+                        remover()
+                        client.disconnect()
                     } else {
                         // Otherwise, just drop it from the list
                         client.send({ event: CLIENT_CHALLENGE_EVENT_DELETE, data: argument.challengeId })
@@ -84,7 +87,10 @@ export class ChallengeGateway
             }
         })
         client.on('disconnect', () => remover())
-        client.send({ event: 'response', data: clientChallenges })
+        console.log(`Sending out ${clientChallenges.length} challenges`)
+        // setTimeout(() => {
+        client.send({ event: CLIENT_CHALLENGE_EVENT_INITIAL, data: clientChallenges })
+        // }, 100)
     }
 
     handleDisconnect(_client: any) {
@@ -113,7 +119,7 @@ export class ChallengeGateway
                 this.challengeService.unregister(client.id)
             })
         }
-        return { event: 'response', data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) };
+        return { event: CLIENT_CHALLENGE_EVENT_INITIAL, data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) };
     }
 
     @SubscribeMessage('delete')
@@ -123,7 +129,9 @@ export class ChallengeGateway
         this.logger.debug(`Delete challenge from ${client.id}`)
         // this.logger.debug(`Data: ${payload}`)
         this.challengeService.unregister(client.id)
-        return { event: 'response', data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) };
+        client.send({ event: 'response', data: this.challengeService.getChallenges().map((challenge): ClientChallenge => mapChallengeToClient(challenge, client.id)) })
+
+        return null;
     }
 
     @SubscribeMessage('accept')
@@ -133,8 +141,11 @@ export class ChallengeGateway
     ): WsResponse<unknown> {
         const { challengeId, deck } = JSON.parse(payload)
         this.logger.debug(`Accepting challenge ${challengeId}`)
+        this.logger.debug(deck)
         const secret = this.challengeService.accept(challengeId, client.id, deck)
         this.logger.debug(`Challenge secret (challenger) ${secret}`)
-        return { event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: secret }
+        client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: secret })
+        client.disconnect()
+        return null
     }
 }

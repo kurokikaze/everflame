@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { v4 } from 'uuid';
 import ContainedEngine from './ContainedEngine';
 import { Socket } from 'socket.io';
@@ -20,6 +20,8 @@ export class GameService {
         a1: ['testGame', 1],
         a2: ['testGame', 2]
     }
+
+    private readonly logger = new Logger(GameService.name);
 
     create(playerOne: string, playerTwo: string, deckOne: string[], deckTwo: string[]): [string, string] {
         const id = v4()
@@ -65,6 +67,8 @@ export class GameService {
 
         if (playerNumber == 1) {
             engine.setPlayerOneCallback((command: ClientCommand) => {
+                console.log('Server command to player 1')
+                console.dir(command)
                 client.send(command)
             })
             const serializedState = engine.getSerializedState(1)
@@ -74,7 +78,9 @@ export class GameService {
             })
             client.on('disconnect', () => engine.setPlayerOneCallback(() => {}))
         } else {
-            engine.setPlayerOneCallback((command: ClientCommand) => {
+            engine.setPlayerTwoCallback((command: ClientCommand) => {
+                console.log('Server command to player 1')
+                console.dir(command)
                 client.send(command)
             })
             const serializedState = engine.getSerializedState(2)
@@ -85,8 +91,14 @@ export class GameService {
             client.on('disconnect', () => engine.setPlayerTwoCallback(() => {}))
         }
 
-        client.on('data', message => {
-            engine.update(message)
+        client.on('message', message => {
+            this.logger.log(`Client command from player ${playerNumber}`)
+            this.logger.log(message)
+            try {
+                engine.update(message)
+            } catch(e) {
+                this.logger.error(`Error updating the engine with the action`, JSON.stringify(message))
+            }
         })
     }
 

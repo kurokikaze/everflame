@@ -73,7 +73,7 @@ export default class ContainedEngine {
         const game = new State({
             ...defaultState,
             zones,
-            activePlayer: 1,
+            activePlayer: 2,
         });
 
         // @ts-ignore
