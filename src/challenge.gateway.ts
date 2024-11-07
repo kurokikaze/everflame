@@ -88,9 +88,7 @@ export class ChallengeGateway
         })
         client.on('disconnect', () => remover())
         console.log(`Sending out ${clientChallenges.length} challenges`)
-        // setTimeout(() => {
         client.send({ event: CLIENT_CHALLENGE_EVENT_INITIAL, data: clientChallenges })
-        // }, 100)
     }
 
     handleDisconnect(_client: any) {

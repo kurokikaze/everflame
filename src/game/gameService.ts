@@ -71,11 +71,6 @@ export class GameService {
                 console.dir(command)
                 client.send(command)
             })
-            const serializedState = engine.getSerializedState(1)
-            client.send({
-                type: 'setInitialState',
-                state: serializedState,
-            })
             client.on('disconnect', () => engine.setPlayerOneCallback(() => {}))
         } else {
             engine.setPlayerTwoCallback((command: ClientCommand) => {
@@ -83,13 +78,14 @@ export class GameService {
                 console.dir(command)
                 client.send(command)
             })
-            const serializedState = engine.getSerializedState(2)
-            client.send({
-                type: 'setInitialState',
-                state: serializedState,
-            })
             client.on('disconnect', () => engine.setPlayerTwoCallback(() => {}))
         }
+
+        const serializedState = engine.getSerializedState(playerNumber)
+        client.send({
+            type: 'setInitialState',
+            state: serializedState,
+        })
 
         client.on('message', message => {
             this.logger.log(`Client command from player ${playerNumber}`)

@@ -100,6 +100,8 @@ export default class ContainedEngine {
     }
 
     public getSerializedState(player: number) {
-        return this.gameState.serializeData(player, true)
+        const state = this.gameState.serializeData(player, true)
+        state.playerNumber = player
+        return state
     }
 }
