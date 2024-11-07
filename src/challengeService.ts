@@ -88,8 +88,9 @@ export class ChallengeService {
   }
 
   unregister(userId: string) {
+    const challengeToRemove = this.challenges.find(({ userId: id }) => id == userId)
     this.challenges = this.challenges.filter(({ userId: id }) => id !== userId)
-    this.sendOut(CHALLENGE_EVENT_UNREGISTER, userId)
+    this.sendOut(CHALLENGE_EVENT_UNREGISTER, challengeToRemove.id)
   }
 
   accept(challengeId: string, playerId: string, deck: string[]): string | null {    
