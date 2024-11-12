@@ -16,7 +16,7 @@ import { GameService } from "./gameService";
 
 @WebSocketGateway({
     cors: true,
-    namespace: /game\/[a-zA-Z0-9-]/g
+    namespace: 'game'
 })
 
 export class GameGateway
@@ -44,6 +44,16 @@ export class GameGateway
 
     handleDisconnect(_client: any) {
         this.logger.debug('Disconnected')
+    }
+
+    @SubscribeMessage('secret')
+    handleSecret(
+        client: any,
+        payload: string,
+    ) {
+        const {secret} = JSON.parse(payload)
+        this.logger.log(`Player secret: ${secret}`)
+        this.gameService.connectWithSecret(secret, client)
     }
 
     @SubscribeMessage('game')

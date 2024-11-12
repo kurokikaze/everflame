@@ -73,12 +73,15 @@ export class ChallengeGateway
                 }
                 case CHALLENGE_EVENT_ACCEPT: {
                     if (client.id === argument.userId) {
+                        setTimeout(() => {
+                            this.logger.debug(`Challenge secret (host) ${argument.secret}`)
+                            client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: argument.secret })
+                            client.disconnect()
+                        }, 200)
                         // If it was our challenge, we should receive the secret
-                        this.logger.debug(`Challenge secret (host) ${argument.secret}`)
-                        client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: argument.secret })
                         remover()
-                        client.disconnect()
                     } else {
+                        this.logger.debug(`Nothing to see (${client.id}/${argument.userId})`)
                         // Otherwise, just drop it from the list
                         client.send({ event: CLIENT_CHALLENGE_EVENT_DELETE, data: argument.challengeId })
                     }
