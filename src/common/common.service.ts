@@ -2,7 +2,7 @@ import { Dictionary, EntityManager } from '@mikro-orm/core';
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, LoggerService, NotFoundException } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { isNull, isUndefined } from './utils/validation.util';
-import { IMessage } from 'src/types/imessage.interface';
+import { IMessage } from '../types/imessage.interface.js';
 import { v4 } from 'uuid';
 import slugify from 'slugify';
 

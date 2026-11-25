@@ -3,60 +3,6 @@ import { Challenge } from './types';
 import { v4 } from 'uuid';
 import { GameService } from './game/gameService';
 
-const testDeck = [
-    'Pruitt',
-    'Poad',
-    'Yaki',
-    'Leaf Hyren',
-    'Leaf Hyren',
-    'Leaf Hyren',
-    'Weebo',
-    'Weebo',
-    'Weebo',
-    'Arboll',
-    'Arboll',
-    'Arboll',
-    'Giant Carillion',
-    'Giant Carillion',
-    'Giant Carillion',
-    'Furok',
-    'Furok',
-    'Furok',
-    'Balamant',
-    'Balamant',
-    'Balamant',
-    'Grow',
-    'Grow',
-    'Grow',
-    'Timber Hyren',
-    'Timber Hyren',
-    'Water of Life',
-    'Water of Life',
-    'Syphon Stone',
-    'Syphon Stone',
-    'Carillion',
-    'Carillion',
-    'Carillion',
-    'Rudwot',
-    'Rudwot',
-    'Rudwot',
-    'Stagadan',
-    'Stagadan',
-    'Stagadan',
-    'Robe of Vines',
-    'Robe of Vines',
-    'Robe of Vines',
-    'Sea Barl',
-]
-
-const testChallenge: Challenge = {
-  comment: 'Evu challenges you',
-  dateCreated: new Date(),
-  deck: testDeck,
-  userId: '12',
-  id: v4()
-}
-
 type ChallengeCallback = (event: string, dto: any) => void
 
 export const CHALLENGE_EVENT_REGISTER = 'register'
@@ -69,17 +15,13 @@ export class ChallengeService {
     private gameService: GameService
   ) { }
 
-  private challenges: Challenge[] = [
-    testChallenge
-  ]
+  private challenges: Challenge[] = []
 
   private challengeClients: Record<string, any> = {}
 
   private callbacks: Record<string, ChallengeCallback> = {}
 
   register(challenge: Challenge, client: any) {
-    console.log('inside service')
-    console.dir(challenge)
     this.challenges.push(challenge)
     this.challengeClients[challenge.id] = client
 
@@ -90,6 +32,8 @@ export class ChallengeService {
   unregister(userId: string) {
     const challengeToRemove = this.challenges.find(({ userId: id }) => id == userId)
     this.challenges = this.challenges.filter(({ userId: id }) => id !== userId)
+    if (!challengeToRemove) return;
+    delete this.challengeClients[challengeToRemove.id];
     this.sendOut(CHALLENGE_EVENT_UNREGISTER, challengeToRemove.id)
   }
 
@@ -106,6 +50,9 @@ export class ChallengeService {
       challenge.deck,
       deck
     )
+
+    this.challenges = this.challenges.filter(item => item.id !== challengeId);
+    delete this.challengeClients[challengeId];
 
     this.sendOut(CHALLENGE_EVENT_ACCEPT, {
       userId: challenge.userId,
@@ -128,6 +75,10 @@ export class ChallengeService {
 
   getChallenges() {
     return this.challenges;
+  }
+
+  getPublicChallenges(): Omit<Challenge, 'deck'>[] {
+    return this.challenges.map(({ deck, ...challenge }) => challenge);
   }
 
   onChange(callback: ChallengeCallback) {

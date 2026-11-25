@@ -10,7 +10,7 @@ export class ChallengeController {
   ) { }
 
   @Get('list')
-  challenges(): Challenge[] {
-    return this.challengeService.getChallenges()
+  challenges(): Omit<Challenge, 'deck'>[] {
+    return this.challengeService.getPublicChallenges()
   }
 }

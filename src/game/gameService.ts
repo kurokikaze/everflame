@@ -1,109 +1,67 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { v4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import ContainedEngine from './ContainedEngine';
 import { Socket } from 'socket.io';
-import { ClientCommand } from './clientProtocol';
 
-type GameEntry = {
-    id: string
-    playerOne: string
-    playerOneSecret: string
-    playerTwo: string
-    playerTwoSecret: string
-    engine: ContainedEngine
-}
+type GameEntry = { id: string; playerOne: string; playerOneSecret: string; playerTwo: string; playerTwoSecret: string; engine: ContainedEngine };
 
 @Injectable()
 export class GameService {
-    private gamesRunning: Record<string, GameEntry> = {}
-    private secretToGame: Record<string, [string, number]> = {
-        a1: ['testGame', 1],
-        a2: ['testGame', 2]
-    }
-
+    private gamesRunning: Record<string, GameEntry> = {};
+    private secretToGame: Record<string, [string, number]> = {};
+    private bindings = new WeakMap<Socket, () => void>();
+    private playerSockets = new Map<string, Socket>();
     private readonly logger = new Logger(GameService.name);
 
     create(playerOne: string, playerTwo: string, deckOne: string[], deckTwo: string[]): [string, string] {
-        const id = v4()
-        const playerOneSecret = v4()
-        const playerTwoSecret = v4()
-
-        const entry: GameEntry = {
-            id,
-            playerOne,
-            playerTwo,
-            engine: new ContainedEngine(deckOne, deckTwo),
-            playerOneSecret,
-            playerTwoSecret,
-        }
-
-        this.saveGameEntry(entry)
-
-        return [playerOneSecret, playerTwoSecret]
-    }
-
-    private saveGameEntry(entry: GameEntry) {
-        this.gamesRunning[entry.id] = entry
-        this.secretToGame[entry.playerOneSecret] = [entry.id, 1]
-        this.secretToGame[entry.playerTwoSecret] = [entry.id, 2]
+        const id = randomUUID();
+        const playerOneSecret = randomUUID();
+        const playerTwoSecret = randomUUID();
+        const engine = new ContainedEngine(deckOne, deckTwo);
+        this.gamesRunning[id] = { id, playerOne, playerTwo, engine, playerOneSecret, playerTwoSecret };
+        this.secretToGame[playerOneSecret] = [id, 1];
+        this.secretToGame[playerTwoSecret] = [id, 2];
+        return [playerOneSecret, playerTwoSecret];
     }
 
     resolveSecret(secret: string): [string, number] | null {
-        if (!(secret in this.secretToGame)) {
-            return null
-        }
-
-        return this.secretToGame[secret]
+        return typeof secret === 'string' && Object.hasOwn(this.secretToGame, secret) ? this.secretToGame[secret] : null;
     }
-    
-    connectWithSecret(secret: string, client: Socket) {
-        const result = this.resolveSecret(secret)
 
-        if (!result) return;
-
-        const [gameId, playerNumber] = result
-
-        const engine = this.getGame(gameId)
-
-        if (playerNumber == 1) {
-            engine.setPlayerOneCallback((command: ClientCommand) => {
-                console.log('Server command to player 1')
-                console.dir(command)
-                client.send(command)
-            })
-            client.on('disconnect', () => engine.setPlayerOneCallback(() => {}))
-        } else {
-            engine.setPlayerTwoCallback((command: ClientCommand) => {
-                console.log('Server command to player 1')
-                console.dir(command)
-                client.send(command)
-            })
-            client.on('disconnect', () => engine.setPlayerTwoCallback(() => {}))
-        }
-
-        const serializedState = engine.getSerializedState(playerNumber)
-        client.send({
-            type: 'setInitialState',
-            state: serializedState,
-        })
-
-        client.on('message', message => {
-            this.logger.log(`Client command from player ${playerNumber}`)
-            this.logger.log(message)
+    connectWithSecret(secret: string, client: Socket): boolean {
+        const result = this.resolveSecret(secret);
+        if (!result) { client.emit('game_error', { message: 'Invalid game secret' }); return false; }
+        const [gameId, player] = result;
+        const engine = this.getGame(gameId);
+        if (!engine) { client.emit('game_error', { message: 'Game not found' }); return false; }
+        this.bindings.get(client)?.();
+        const key = `${gameId}:${player}`;
+        const previous = this.playerSockets.get(key);
+        if (previous && previous !== client) previous.disconnect(true);
+        const unsubscribe = engine.subscribe(player, command => client.send(command));
+        const onMessage = (message: unknown) => {
             try {
-                engine.update(message)
-            } catch(e) {
-                this.logger.error(`Error updating the engine with the action`, JSON.stringify(message))
+                if (!engine.update(message, player)) client.emit('action_error', { message: 'Action is not allowed' });
+            } catch {
+                this.logger.warn(`Rejected invalid action from player ${player}`);
+                client.emit('action_error', { message: 'Invalid action' });
             }
-        })
+        };
+        const cleanup = () => {
+            unsubscribe();
+            client.off('message', onMessage);
+            client.off('disconnect', cleanup);
+            if (this.playerSockets.get(key) === client) this.playerSockets.delete(key);
+            if (this.bindings.get(client) === cleanup) this.bindings.delete(client);
+        };
+        this.bindings.set(client, cleanup);
+        this.playerSockets.set(key, client);
+        client.on('message', onMessage);
+        client.once('disconnect', cleanup);
+        client.send({ type: 'setInitialState', state: engine.getSerializedState(player) });
+        return true;
     }
 
-    getGame(id: string): ContainedEngine|null {
-        if (!(id in this.gamesRunning)) return null
-        return this.gamesRunning[id].engine
-    }
-
-    getGames() {
-        return Object.values(this.gamesRunning).map(({id, playerOne, playerTwo}) => ({id, playerOne, playerTwo}));
-    }
+    getGame(id: string): ContainedEngine | null { return this.gamesRunning[id]?.engine ?? null; }
+    getGames() { return Object.values(this.gamesRunning).map(({ id, playerOne, playerTwo }) => ({ id, playerOne, playerTwo })); }
 }

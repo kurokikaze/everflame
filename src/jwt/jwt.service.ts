@@ -1,14 +1,14 @@
 import * as jwt from 'jsonwebtoken';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CommonService } from 'src/common/common.service';
+import { CommonService } from '../common/common.service.js';
 import { IJwt } from '../types/jwt.interface';
 import { IAccessPayload, IAccessToken } from './interfaces/access-token.interface';
 import { IEmailPayload, IEmailToken } from './interfaces/email-token.interface';
 import { IRefreshPayload, IRefreshToken } from './interfaces/refresh-token.interface';
 import { TokenTypeEnum } from './enums/token-type.enum';
 import { v4 } from 'uuid';
-import { IUser } from 'src/users/interfaces/user.interface';
+import { IUser } from '../users/interfaces/user.interface.js';
 
 @Injectable()
 export class JwtService {

@@ -74,7 +74,6 @@ export class ChallengeGateway
                 case CHALLENGE_EVENT_ACCEPT: {
                     if (client.id === argument.userId) {
                         setTimeout(() => {
-                            this.logger.debug(`Challenge secret (host) ${argument.secret}`)
                             client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: argument.secret })
                             client.disconnect()
                         }, 200)
@@ -90,7 +89,6 @@ export class ChallengeGateway
             }
         })
         client.on('disconnect', () => remover())
-        console.log(`Sending out ${clientChallenges.length} challenges`)
         client.send({ event: CLIENT_CHALLENGE_EVENT_INITIAL, data: clientChallenges })
     }
 
@@ -144,7 +142,7 @@ export class ChallengeGateway
         this.logger.debug(`Accepting challenge ${challengeId}`)
         this.logger.debug(deck)
         const secret = this.challengeService.accept(challengeId, client.id, deck)
-        this.logger.debug(`Challenge secret (challenger) ${secret}`)
+        if (!secret) return { event: 'error', data: 'Challenge is no longer available' };
         client.send({ event: CLIENT_CHALLENGE_EVENT_ACCEPT, data: secret })
         client.disconnect()
         return null

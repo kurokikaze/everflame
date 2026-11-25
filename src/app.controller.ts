@@ -1,16 +1,13 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ChallengeService } from './challengeService';
 import { Challenge } from './types';
-import { AuthService } from './auth/auth.service';
-import { v4 } from 'uuid';
 
 @Controller('challenge')
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly challengeService: ChallengeService,
-    private readonly authService: AuthService
   ) { }
 
   @Get('')
@@ -24,18 +21,8 @@ export class AppController {
   }
 
   @Get('list')
-  challenges(): Challenge[] {
-    return this.challengeService.getChallenges()
+  challenges(): Omit<Challenge, 'deck'>[] {
+    return this.challengeService.getPublicChallenges()
   }
 
-  @Get('testRegister')
-  testRegister() {
-    this.authService.signUp({
-      email: 'test1@example.com',
-      name: 'testUser',
-      password1: 'testPass',
-      password2: 'testPass'
-    })
-    return { success: true }
-  }
 }

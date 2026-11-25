@@ -3,7 +3,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/sqlite';
 import { CommonService } from '../common/common.service';
 import { UserEntity } from './entities/user.entity';
-import { isNull, isUndefined } from 'src/common/utils/validation.util';
+import { isNull, isUndefined } from '../common/utils/validation.util.js';
 import { compare, hash } from 'bcrypt';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ChangeEmailDto } from './dtos/change-email.dto';

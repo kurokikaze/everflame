@@ -1,3 +1,4 @@
+import { mockDependency } from '../../test/mock-dependency';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 
@@ -7,7 +8,7 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-    }).compile();
+    }).useMocker(mockDependency).compile();
 
     controller = module.get<UserController>(UserController);
   });

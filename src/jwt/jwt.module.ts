@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtService } from './jwt.service';
-import { CommonService } from 'src/common/common.service';
+import { CommonService } from '../common/common.service.js';
 
 @Module({
   providers: [JwtService, CommonService],

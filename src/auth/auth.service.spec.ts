@@ -1,3 +1,4 @@
+import { mockDependency } from '../../test/mock-dependency';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 
@@ -7,7 +8,7 @@ describe('AuthService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [AuthService],
-    }).compile();
+    }).useMocker(mockDependency).compile();
 
     service = module.get<AuthService>(AuthService);
   });

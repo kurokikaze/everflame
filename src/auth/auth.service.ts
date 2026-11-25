@@ -23,9 +23,9 @@ import { TokenTypeEnum } from '../jwt/enums/token-type.enum';
 import { SLUG_REGEX } from '../common/consts/regex.const';
 import { SignUpDto } from './dtos/sign-up.dto';
 import { SignInDto } from './dtos/sign-in.dto';
-import { isNull, isUndefined } from 'src/common/utils/validation.util';
+import { isNull, isUndefined } from '../common/utils/validation.util.js';
 import { EmailDto } from './dtos/email.dto';
-import { IEmailToken } from 'src/jwt/interfaces/email-token.interface';
+import { IEmailToken } from '../jwt/interfaces/email-token.interface.js';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 

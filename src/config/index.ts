@@ -18,7 +18,7 @@ export function config(): IConfig {
     id: process.env.APP_ID,
     APP_ID: process.env.APP_ID,
     port: parseInt(process.env.PORT, 10),
-    domain: process.env.DOMAIN,
+    domain: process.env.DOMAIN ?? process.env.URL,
     jwt: {
       access: {
         privateKey,
@@ -49,15 +49,13 @@ export function config(): IConfig {
     },
     db: defineConfig({
       clientUrl: 'everflame',
-      dbName: 'database/everflame.sqlite',
+      dbName: process.env.DATABASE_URL ?? 'database/everflame.sqlite',
       entities: ['dist/**/*.entity.js', 'dist/**/*.embeddable.js'],
       entitiesTs: ['src/**/*.entity.ts', 'src/**/*.embeddable.ts'],
       loadStrategy: LoadStrategy.JOINED,
       allowGlobalContext: true,
     }),
   };
-
-  console.dir(config)
 
   return config;
 }

@@ -2,13 +2,13 @@ import { Injectable, Logger, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, Transporter } from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { IEmailConfig } from 'src/types/email-config.interface';
+import { IEmailConfig } from '../types/email-config.interface.js';
 import Handlebars from 'handlebars';
 import { ITemplatedData } from './interfaces/template-data.interface';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ITemplates } from './interfaces/templates.interface';
-import { IUser } from 'src/users/interfaces/user.interface';
+import { IUser } from '../users/interfaces/user.interface.js';
 
 @Injectable()
 export class MailerService {

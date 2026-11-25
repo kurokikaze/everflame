@@ -40,8 +40,6 @@ import { GameService } from './game/gameService';
   controllers: [AppController, ChallengeController, UserController],
   providers: [
     AppService,
-    ChallengeService,
-    GameService,
   ],
 })
 

@@ -35,11 +35,7 @@ export class GameGateway
     handleConnection(
         @ConnectedSocket() client: Socket
     ) {
-        this.logger.log(`Client id: ${client.id} connected`)
-        this.logger.log(`Connection namespace: ${client.nsp.name}`)
-        const playerSecret = client.nsp.name.split('/')[2]
-        this.logger.log(`Player secret: ${playerSecret}`)
-        this.gameService.connectWithSecret(playerSecret, client)
+        this.logger.debug(`Client ${client.id} connected; waiting for game secret`)
     }
 
     handleDisconnect(_client: any) {
@@ -48,12 +44,15 @@ export class GameGateway
 
     @SubscribeMessage('secret')
     handleSecret(
-        client: any,
-        payload: string,
+        @ConnectedSocket() client: Socket,
+        @MessageBody() payload: string | { secret: string },
     ) {
-        const {secret} = JSON.parse(payload)
-        this.logger.log(`Player secret: ${secret}`)
-        this.gameService.connectWithSecret(secret, client)
+        try {
+            const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
+            this.gameService.connectWithSecret(data?.secret, client);
+        } catch {
+            client.emit('game_error', { message: 'Invalid game secret' });
+        }
     }
 
     @SubscribeMessage('game')

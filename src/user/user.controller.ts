@@ -1,6 +1,6 @@
 import { ConflictException, Controller, Get } from '@nestjs/common';
 import { errorMonitor } from 'events';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from '../auth/auth.service.js';
 
 @Controller('user')
 export class UserController {

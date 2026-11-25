@@ -5,7 +5,7 @@ import { JwtModule } from '../jwt/jwt.module';
 import { MailerModule } from '../mailer/mailer.module';
 import { UsersModule } from '../users/users.module';
 import { BlacklistedTokenEntity } from './entity/blacklisted-token.entity';
-import { CommonService } from 'src/common/common.service';
+import { CommonService } from '../common/common.service.js';
 import { AuthController } from './auth.controller';
 
 @Module({
